@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Calendar, Loader2 } from "lucide-react";
+import { Plus, Calendar, Loader2, FolderKanban } from "lucide-react";
 
 interface Project {
   id: string;
@@ -34,6 +34,7 @@ interface Project {
   status: string;
   due_date: string | null;
   budget: number | null;
+  created_at: string;
   clients: { name: string } | null;
 }
 
@@ -119,14 +120,14 @@ export default function ProjectsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-muted-foreground mt-1">
+          <h1 className="text-4xl font-bold tracking-tight">Projects</h1>
+          <p className="text-muted-foreground mt-3">
             Manage your active projects
           </p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
-            <Button>
+            <Button className="h-10 px-5 rounded-xl bg-[#37322F] hover:bg-[#4A443F] dark:bg-[#E8A040] dark:hover:bg-[#D4922E] text-white">
               <Plus className="mr-2 h-4 w-4" /> New Project
             </Button>
           </DialogTrigger>
@@ -194,49 +195,87 @@ export default function ProjectsPage() {
       </div>
 
       {projects.length === 0 ? (
-        <Card className="border-border/50 border-dashed">
-          <CardContent className="flex flex-col items-center justify-center py-12">
-            <p className="text-muted-foreground">No projects yet</p>
-            <p className="text-sm text-muted-foreground">
+        <div className="rounded-3xl bg-[rgba(55,50,47,0.03)] dark:bg-white/[0.02] p-3">
+          <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm p-12 flex flex-col items-center justify-center shadow-sm">
+            <FolderKanban className="h-8 w-8 text-[rgba(55,50,47,0.15)] dark:text-zinc-700 mb-3" strokeWidth={1.5} />
+            <p className="text-[#37322F] dark:text-white font-medium">No projects yet</p>
+            <p className="text-sm text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-1">
               Create your first project to get started
             </p>
-          </CardContent>
-        </Card>
+          </div>
+        </div>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {projects.map((project) => (
-            <Link key={project.id} href={`/projects/${project.id}`}>
-              <Card className="border-border/50 hover:border-primary/30 transition-colors cursor-pointer">
-                <CardContent className="pt-6">
-                  <div className="flex items-start justify-between mb-3">
-                    <h3 className="font-semibold truncate">{project.name}</h3>
-                    <Badge className={statusColors[project.status] || ""}>
+          {projects.map((project) => {
+            const colors = [
+              "from-amber-100 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20",
+              "from-blue-100 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20",
+              "from-emerald-100 to-green-50 dark:from-emerald-950/30 dark:to-green-950/20",
+              "from-violet-100 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20",
+              "from-rose-100 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20",
+              "from-cyan-100 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/20",
+            ];
+            const colorClass = colors[project.name.length % colors.length];
+
+            return (
+              <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
+                <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
+                  {/* Header: client + status */}
+                  <div className="flex items-center justify-between px-4 pt-4 pb-3">
+                    <div className="flex items-center gap-2.5">
+                      <div className="h-8 w-8 rounded-full bg-[rgba(55,50,47,0.06)] dark:bg-white/[0.06] flex items-center justify-center text-xs font-semibold text-[#37322F] dark:text-white">
+                        {project.clients?.name?.charAt(0) || project.name.charAt(0)}
+                      </div>
+                      <div>
+                        <p className="text-sm font-medium text-[#37322F] dark:text-white">{project.clients?.name || "No client"}</p>
+                        <p className="text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-500">
+                          {new Date(project.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
+                        </p>
+                      </div>
+                    </div>
+                    <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                      project.status === "active"
+                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        : project.status === "completed"
+                        ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                        : project.status === "on_hold"
+                        ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                        : "bg-zinc-500/10 text-zinc-600 dark:text-zinc-400"
+                    }`}>
                       {project.status}
-                    </Badge>
+                    </span>
                   </div>
-                  {project.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
-                      {project.description}
-                    </p>
-                  )}
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground">
-                    {project.clients?.name && (
-                      <span>{project.clients.name}</span>
-                    )}
-                    {project.due_date && (
-                      <span className="flex items-center gap-1">
-                        <Calendar className="h-3 w-3" />
-                        {new Date(project.due_date).toLocaleDateString()}
-                      </span>
-                    )}
-                    {project.budget && <span>€{project.budget.toLocaleString()}</span>}
+
+                  {/* Thumbnail / gradient placeholder */}
+                  <div className={`mx-3 h-36 rounded-xl bg-gradient-to-br ${colorClass} flex items-center justify-center`}>
+                    <FolderKanban className="h-8 w-8 text-[rgba(55,50,47,0.1)] dark:text-white/10" strokeWidth={1.5} />
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
+
+                  {/* Project info */}
+                  <div className="px-4 py-3.5">
+                    <h3 className="font-semibold text-[#37322F] dark:text-white text-sm">{project.name}</h3>
+                    {project.description && (
+                      <p className="text-xs text-[rgba(55,50,47,0.5)] dark:text-zinc-500 line-clamp-1 mt-1">
+                        {project.description}
+                      </p>
+                    )}
+                    <div className="flex items-center gap-3 mt-2.5 text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-500">
+                      {project.due_date && (
+                        <span className="flex items-center gap-1">
+                          <Calendar className="h-3 w-3" />
+                          {new Date(project.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
+                        </span>
+                      )}
+                      {project.budget && <span>€{project.budget.toLocaleString()}</span>}
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            );
+          })}
         </div>
       )}
     </div>
   );
 }
+

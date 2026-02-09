@@ -167,36 +167,13 @@ export default function DashboardPage() {
               <p className="text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-500 uppercase tracking-wider">
                 {card.title}
               </p>
-              <p className="text-5xl font-bold text-[#37322F] dark:text-white leading-none mt-0.5">
+              <p className="text-5xl font-bold text-[#37322F] dark:text-white leading-none -mt-0.5">
                 {card.value}
               </p>
             </div>
           ))}
         </div>
 
-        <div className="hidden md:flex items-center gap-2 self-center">
-          <Link
-            href="/dashboard/projects"
-            className="h-10 px-4 rounded-xl bg-white/50 dark:bg-white/5 border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] flex items-center gap-2 text-sm font-medium text-[rgba(55,50,47,0.6)] dark:text-zinc-400 hover:bg-white/80 dark:hover:bg-white/10 hover:text-[#37322F] dark:hover:text-white transition-all duration-200"
-          >
-            <FolderKanban className="h-4 w-4" />
-            New Project
-          </Link>
-          <Link
-            href="/dashboard/clients"
-            className="h-10 px-4 rounded-xl bg-white/50 dark:bg-white/5 border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] flex items-center gap-2 text-sm font-medium text-[rgba(55,50,47,0.6)] dark:text-zinc-400 hover:bg-white/80 dark:hover:bg-white/10 hover:text-[#37322F] dark:hover:text-white transition-all duration-200"
-          >
-            <Users className="h-4 w-4" />
-            New Client
-          </Link>
-          <Link
-            href="/dashboard/invoices"
-            className="h-10 px-4 rounded-xl bg-white/50 dark:bg-white/5 border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] flex items-center gap-2 text-sm font-medium text-[rgba(55,50,47,0.6)] dark:text-zinc-400 hover:bg-white/80 dark:hover:bg-white/10 hover:text-[#37322F] dark:hover:text-white transition-all duration-200"
-          >
-            <FileText className="h-4 w-4" />
-            New Invoice
-          </Link>
-        </div>
       </div>
 
       {/* 2x2 Grid — Outer containers */}
@@ -204,13 +181,11 @@ export default function DashboardPage() {
         {/* Top Left — AI Assistant Chat */}
         <div className="rounded-3xl bg-[rgba(55,50,47,0.03)] dark:bg-white/[0.02] p-3 h-[380px]">
           <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm p-5 h-full flex flex-col shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <div className="h-8 w-8 rounded-lg bg-[#E8A040]/15 flex items-center justify-center">
-                <Sparkles className="h-4 w-4 text-[#E8A040]" />
-              </div>
+            <div className="flex items-center gap-4 mb-5">
+              <Sparkles className="h-5 w-5 text-[rgba(55,50,47,0.3)] dark:text-zinc-500" strokeWidth={1.5} />
               <div>
-                <h3 className="text-sm font-semibold text-[#37322F] dark:text-white">AI Assistant</h3>
-                <p className="text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-500">Coming soon</p>
+                <h3 className="text-base font-semibold text-[#37322F] dark:text-white">AI Assistant</h3>
+                <p className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-0.5">Ask anything about your workspace</p>
               </div>
             </div>
 
@@ -245,12 +220,13 @@ export default function DashboardPage() {
         {/* Top Right — Projects */}
         <div className="rounded-3xl bg-[rgba(55,50,47,0.03)] dark:bg-white/[0.02] p-3 h-[380px]">
           <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm p-5 h-full flex flex-col shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-indigo-500/10 flex items-center justify-center">
-                  <FolderKanban className="h-4 w-4 text-indigo-500" />
+            <div className="flex items-center justify-between mb-5" >
+              <div className="flex items-center gap-4">
+                <FolderKanban className="h-5 w-5 text-[rgba(55,50,47,0.3)] dark:text-zinc-500" strokeWidth={1.5} />
+                <div>
+                  <h3 className="text-base font-semibold text-[#37322F] dark:text-white">Projects</h3>
+                  <p className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-0.5">Recent activity</p>
                 </div>
-                <h3 className="text-sm font-semibold text-[#37322F] dark:text-white">Projects</h3>
               </div>
               <Link href="/dashboard/projects" className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500 hover:text-[#37322F] dark:hover:text-white transition-colors">
                 View all →
@@ -303,12 +279,13 @@ export default function DashboardPage() {
         {/* Bottom Left — Clients */}
         <div className="rounded-3xl bg-[rgba(55,50,47,0.03)] dark:bg-white/[0.02] p-3 h-[340px]">
           <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm p-5 h-full flex flex-col shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-emerald-500/10 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-emerald-500" />
+            <div className="flex items-center justify-between mb-5" >
+              <div className="flex items-center gap-4">
+                <Users className="h-5 w-5 text-[rgba(55,50,47,0.3)] dark:text-zinc-500" strokeWidth={1.5} />
+                <div>
+                  <h3 className="text-base font-semibold text-[#37322F] dark:text-white">Clients</h3>
+                  <p className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-0.5">Your active clients</p>
                 </div>
-                <h3 className="text-sm font-semibold text-[#37322F] dark:text-white">Clients</h3>
               </div>
               <Link href="/dashboard/clients" className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500 hover:text-[#37322F] dark:hover:text-white transition-colors">
                 View all →
@@ -349,14 +326,14 @@ export default function DashboardPage() {
         {/* Bottom Right — Revenue Line Graph */}
         <div className="rounded-3xl bg-[rgba(55,50,47,0.03)] dark:bg-white/[0.02] p-3 h-[340px]">
           <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm p-5 h-full flex flex-col shadow-sm">
-            <div className="flex items-center justify-between mb-4">
-              <div className="flex items-center gap-2">
-                <div className="h-8 w-8 rounded-lg bg-green-500/10 flex items-center justify-center">
-                  <TrendingUp className="h-4 w-4 text-green-500" />
+            <div className="flex items-center justify-between mb-5" >
+              <div className="flex items-center gap-4">
+                <TrendingUp className="h-5 w-5 text-[rgba(55,50,47,0.3)] dark:text-zinc-500" strokeWidth={1.5} />
+                <div>
+                  <h3 className="text-base font-semibold text-[#37322F] dark:text-white">Revenue</h3>
+                  <p className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-0.5">Last 6 months overview</p>
                 </div>
-                <h3 className="text-sm font-semibold text-[#37322F] dark:text-white">Revenue</h3>
               </div>
-              <p className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500">Last 6 months</p>
             </div>
 
             <div className="flex-1">
@@ -411,3 +388,6 @@ export default function DashboardPage() {
     </div>
   );
 }
+
+
+

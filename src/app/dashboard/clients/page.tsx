@@ -79,8 +79,8 @@ export default function ClientsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight">Clients</h1>
-          <p className="text-muted-foreground mt-1">Manage your client list</p>
+          <h1 className="text-4xl font-bold tracking-tight">Clients</h1>
+          <p className="text-muted-foreground mt-3">Manage your client list</p>
         </div>
         <Dialog open={open} onOpenChange={setOpen}>
           <DialogTrigger asChild>
@@ -164,3 +164,4 @@ export default function ClientsPage() {
     </div>
   );
 }
+

@@ -42,8 +42,8 @@ export default function MessagesPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold tracking-tight">Messages</h1>
-        <p className="text-muted-foreground mt-1">All project communications</p>
+        <h1 className="text-4xl font-bold tracking-tight">Messages</h1>
+        <p className="text-muted-foreground mt-3">All project communications</p>
       </div>
 
       {loading ? (
@@ -77,3 +77,4 @@ export default function MessagesPage() {
     </div>
   );
 }
+
