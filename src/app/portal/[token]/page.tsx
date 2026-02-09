@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, use } from "react";
+import { useEffect, useState, useCallback, use } from "react";
 import { createBrowserClient } from "@supabase/ssr";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -167,7 +167,7 @@ export default function PortalPage({
     setLoading(false);
   }
 
-  async function loadProjectData(projectId: string) {
+  const loadProjectData = useCallback(async (projectId: string) => {
     const [msgRes, fileRes, invRes] = await Promise.all([
       supabase.from("messages").select("*").eq("project_id", projectId).order("created_at"),
       supabase.from("files").select("*").eq("project_id", projectId).order("created_at", { ascending: false }),
@@ -176,7 +176,37 @@ export default function PortalPage({
     setMessages(msgRes.data || []);
     setFiles(fileRes.data || []);
     setInvoices(invRes.data || []);
-  }
+  }, [supabase]);
+
+  // Real-time subscriptions for the selected project
+  useEffect(() => {
+    if (!selectedProject) return;
+    const pid = selectedProject.id;
+
+    const msgChannel = supabase
+      .channel(`portal-messages-${pid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "messages", filter: `project_id=eq.${pid}` },
+        () => loadProjectData(pid))
+      .subscribe();
+
+    const fileChannel = supabase
+      .channel(`portal-files-${pid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "files", filter: `project_id=eq.${pid}` },
+        () => loadProjectData(pid))
+      .subscribe();
+
+    const invChannel = supabase
+      .channel(`portal-invoices-${pid}`)
+      .on("postgres_changes", { event: "*", schema: "public", table: "invoices", filter: `project_id=eq.${pid}` },
+        () => loadProjectData(pid))
+      .subscribe();
+
+    return () => {
+      msgChannel.unsubscribe();
+      fileChannel.unsubscribe();
+      invChannel.unsubscribe();
+    };
+  }, [selectedProject, supabase, loadProjectData]);
 
   async function selectProject(project: Project) {
     setSelectedProject(project);
