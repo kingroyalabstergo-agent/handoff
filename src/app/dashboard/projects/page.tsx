@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Calendar, Loader2, FolderKanban, Zap, Clock, Archive } from "lucide-react";
+import { Plus, Calendar, Loader2, FolderKanban, Zap, Clock, Archive, ArrowRight, ArrowLeft, Globe, Palette, Code, PenTool, Video, Megaphone, Check, Sparkles } from "lucide-react";
 
 interface Project {
   id: string;
@@ -56,11 +56,16 @@ export default function ProjectsPage() {
   const [clients, setClients] = useState<ClientOption[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
+  const [step, setStep] = useState(1);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
   const [clientId, setClientId] = useState("");
   const [dueDate, setDueDate] = useState("");
   const [budget, setBudget] = useState("");
+  const [projectType, setProjectType] = useState<string>("");
+
+  const TOTAL_STEPS = 3;
+  const progress = (step / TOTAL_STEPS) * 100;
 
   const supabase = createClient();
 
@@ -105,6 +110,7 @@ export default function ProjectsPage() {
     setDueDate("");
     setBudget("");
     setOpen(false);
+    setStep(1);
     loadProjects();
   }
 
@@ -125,70 +131,224 @@ export default function ProjectsPage() {
             Manage your active projects
           </p>
         </div>
-        <Dialog open={open} onOpenChange={setOpen}>
+        <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) setStep(1); }}>
           <DialogTrigger asChild>
-            <Button className="h-10 px-5 rounded-xl bg-[#37322F] hover:bg-[#4A443F] dark:bg-[#E8A040] dark:hover:bg-[#D4922E] text-white">
+            <Button className="h-10 px-5 rounded-xl bg-white/50 dark:bg-white/5 border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] text-[rgba(55,50,47,0.6)] dark:text-zinc-400 hover:bg-white/80 dark:hover:bg-white/10 hover:text-[#37322F] dark:hover:text-white font-medium shadow-none">
               <Plus className="mr-2 h-4 w-4" /> New Project
             </Button>
           </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Create Project</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4 pt-2">
-              <div>
-                <Label>Name</Label>
-                <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Project name"
-                />
-              </div>
-              <div>
-                <Label>Description</Label>
-                <Textarea
-                  value={desc}
-                  onChange={(e) => setDesc(e.target.value)}
-                  placeholder="Brief description"
-                />
-              </div>
-              <div>
-                <Label>Client</Label>
-                <Select value={clientId} onValueChange={setClientId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {clients.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
-                        {c.name}
-                      </SelectItem>
+          <DialogContent className="sm:max-w-[520px] p-0 overflow-hidden border-[rgba(55,50,47,0.08)] dark:border-white/[0.06] bg-[#F7F5F3] dark:bg-zinc-950 rounded-2xl">
+            {/* Progress bar */}
+            <div className="w-full h-1 bg-[rgba(55,50,47,0.06)] dark:bg-zinc-900">
+              <div className="h-full bg-[#E8A040] transition-all duration-500 ease-out" style={{ width: `${progress}%` }} />
+            </div>
+
+            <div className="p-6 pt-5">
+              {/* Step 1 — Project Type */}
+              {step === 1 && (
+                <div className="space-y-6">
+                  <div>
+                    <h2 className="text-xl font-semibold text-[#37322F] dark:text-white" style={{ fontFamily: "var(--font-instrument-serif)" }}>
+                      What type of project?
+                    </h2>
+                    <p className="text-sm text-[rgba(55,50,47,0.5)] dark:text-zinc-500 mt-1">
+                      Choose the category that best fits this project.
+                    </p>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-3">
+                    {[
+                      { id: "website", label: "Website", icon: Globe },
+                      { id: "branding", label: "Branding", icon: Palette },
+                      { id: "development", label: "Development", icon: Code },
+                      { id: "design", label: "UI/UX Design", icon: PenTool },
+                      { id: "video", label: "Video", icon: Video },
+                      { id: "marketing", label: "Marketing", icon: Megaphone },
+                    ].map((type) => (
+                      <button
+                        key={type.id}
+                        onClick={() => setProjectType(type.id)}
+                        className={`relative p-4 rounded-xl border-2 transition-all duration-200 text-center ${
+                          projectType === type.id
+                            ? "border-[#E8A040] bg-white dark:bg-zinc-900 shadow-sm"
+                            : "border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.02] hover:border-[rgba(55,50,47,0.12)] dark:hover:border-white/[0.1]"
+                        }`}
+                      >
+                        <type.icon
+                          className={`h-5 w-5 mx-auto mb-2 ${
+                            projectType === type.id
+                              ? "text-[#E8A040]"
+                              : "text-[rgba(55,50,47,0.3)] dark:text-zinc-500"
+                          }`}
+                          strokeWidth={1.5}
+                        />
+                        <span className={`text-xs font-medium ${
+                          projectType === type.id
+                            ? "text-[#37322F] dark:text-white"
+                            : "text-[rgba(55,50,47,0.5)] dark:text-zinc-500"
+                        }`}>
+                          {type.label}
+                        </span>
+                        {projectType === type.id && (
+                          <div className="absolute top-2 right-2 h-4 w-4 rounded-full bg-[#E8A040] flex items-center justify-center">
+                            <Check className="h-2.5 w-2.5 text-white" />
+                          </div>
+                        )}
+                      </button>
                     ))}
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <Label>Due Date</Label>
-                  <Input
-                    type="date"
-                    value={dueDate}
-                    onChange={(e) => setDueDate(e.target.value)}
-                  />
+                  </div>
                 </div>
-                <div>
-                  <Label>Budget (€)</Label>
-                  <Input
-                    type="number"
-                    value={budget}
-                    onChange={(e) => setBudget(e.target.value)}
-                    placeholder="0.00"
-                  />
+              )}
+
+              {/* Step 2 — Project Details */}
+              {step === 2 && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-semibold text-[#37322F] dark:text-white" style={{ fontFamily: "var(--font-instrument-serif)" }}>
+                      Project details
+                    </h2>
+                    <p className="text-sm text-[rgba(55,50,47,0.5)] dark:text-zinc-500 mt-1">
+                      Name your project and describe the scope.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label className="text-[#37322F] dark:text-zinc-300 text-sm">Project Name</Label>
+                      <Input
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        placeholder="e.g. Brand Redesign for Acme Co"
+                        autoFocus
+                        className="h-11 rounded-xl border-[rgba(55,50,47,0.1)] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-[#37322F] dark:text-white placeholder:text-[rgba(55,50,47,0.3)] dark:placeholder:text-zinc-600 focus-visible:ring-[#E8A040]/30 focus-visible:border-[#E8A040]/50"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[#37322F] dark:text-zinc-300 text-sm">Description</Label>
+                      <Textarea
+                        value={desc}
+                        onChange={(e) => setDesc(e.target.value)}
+                        placeholder="Brief scope of work, deliverables, goals..."
+                        rows={3}
+                        className="rounded-xl border-[rgba(55,50,47,0.1)] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-[#37322F] dark:text-white placeholder:text-[rgba(55,50,47,0.3)] dark:placeholder:text-zinc-600 focus-visible:ring-[#E8A040]/30 focus-visible:border-[#E8A040]/50 resize-none"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label className="text-[#37322F] dark:text-zinc-300 text-sm">Client</Label>
+                      <Select value={clientId} onValueChange={setClientId}>
+                        <SelectTrigger className="h-11 rounded-xl border-[rgba(55,50,47,0.1)] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-[#37322F] dark:text-white">
+                          <SelectValue placeholder="Assign to a client" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {clients.map((c) => (
+                            <SelectItem key={c.id} value={c.id}>
+                              {c.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
                 </div>
+              )}
+
+              {/* Step 3 — Timeline & Budget */}
+              {step === 3 && (
+                <div className="space-y-5">
+                  <div>
+                    <h2 className="text-xl font-semibold text-[#37322F] dark:text-white" style={{ fontFamily: "var(--font-instrument-serif)" }}>
+                      Timeline & budget
+                    </h2>
+                    <p className="text-sm text-[rgba(55,50,47,0.5)] dark:text-zinc-500 mt-1">
+                      Set deadlines and pricing for this project.
+                    </p>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label className="text-[#37322F] dark:text-zinc-300 text-sm">Due Date</Label>
+                        <Input
+                          type="date"
+                          value={dueDate}
+                          onChange={(e) => setDueDate(e.target.value)}
+                          className="h-11 rounded-xl border-[rgba(55,50,47,0.1)] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-[#37322F] dark:text-white focus-visible:ring-[#E8A040]/30 focus-visible:border-[#E8A040]/50"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label className="text-[#37322F] dark:text-zinc-300 text-sm">Budget (€)</Label>
+                        <Input
+                          type="number"
+                          value={budget}
+                          onChange={(e) => setBudget(e.target.value)}
+                          placeholder="0.00"
+                          className="h-11 rounded-xl border-[rgba(55,50,47,0.1)] dark:border-zinc-800 bg-white dark:bg-zinc-900/50 text-[#37322F] dark:text-white placeholder:text-[rgba(55,50,47,0.3)] dark:placeholder:text-zinc-600 focus-visible:ring-[#E8A040]/30 focus-visible:border-[#E8A040]/50"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Summary preview */}
+                    <div className="rounded-xl bg-white dark:bg-zinc-900/50 border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] p-4 space-y-2.5 mt-2">
+                      <p className="text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-600 uppercase tracking-wider">Summary</p>
+                      <div className="space-y-1.5">
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[rgba(55,50,47,0.5)] dark:text-zinc-500">Type</span>
+                          <span className="text-[#37322F] dark:text-white font-medium capitalize">{projectType || "—"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[rgba(55,50,47,0.5)] dark:text-zinc-500">Project</span>
+                          <span className="text-[#37322F] dark:text-white font-medium">{name || "—"}</span>
+                        </div>
+                        <div className="flex justify-between text-sm">
+                          <span className="text-[rgba(55,50,47,0.5)] dark:text-zinc-500">Client</span>
+                          <span className="text-[#37322F] dark:text-white font-medium">{clients.find(c => c.id === clientId)?.name || "—"}</span>
+                        </div>
+                        {budget && (
+                          <div className="flex justify-between text-sm">
+                            <span className="text-[rgba(55,50,47,0.5)] dark:text-zinc-500">Budget</span>
+                            <span className="text-[#37322F] dark:text-white font-medium">€{parseFloat(budget).toLocaleString()}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Navigation */}
+              <div className="flex items-center justify-between mt-6">
+                {step > 1 ? (
+                  <button
+                    onClick={() => setStep(step - 1)}
+                    className="flex items-center gap-1.5 text-sm text-[rgba(55,50,47,0.5)] dark:text-zinc-500 hover:text-[#37322F] dark:hover:text-white transition-colors"
+                  >
+                    <ArrowLeft className="h-4 w-4" />
+                    Back
+                  </button>
+                ) : (
+                  <div />
+                )}
+
+                {step < TOTAL_STEPS ? (
+                  <button
+                    onClick={() => setStep(step + 1)}
+                    disabled={step === 1 && !projectType || step === 2 && !name}
+                    className="h-10 px-5 rounded-xl bg-[#37322F] hover:bg-[#4A443F] dark:bg-[#E8A040] dark:hover:bg-[#D4922E] text-white text-sm font-medium flex items-center gap-2 disabled:opacity-40 transition-all"
+                  >
+                    Continue
+                    <ArrowRight className="h-4 w-4" />
+                  </button>
+                ) : (
+                  <button
+                    onClick={handleCreate}
+                    disabled={!name}
+                    className="h-10 px-6 rounded-xl bg-[#E8A040] hover:bg-[#D4922E] text-white text-sm font-medium flex items-center gap-2 disabled:opacity-40 transition-all"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    Create Project
+                  </button>
+                )}
               </div>
-              <Button onClick={handleCreate} className="w-full">
-                Create Project
-              </Button>
             </div>
           </DialogContent>
         </Dialog>
