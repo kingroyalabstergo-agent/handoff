@@ -136,28 +136,7 @@ export default function ProjectDetailPage({
   useEffect(() => {
     if (!user) return;
     loadData();
-
-    // Real-time messages
-    const channel = supabase
-      .channel(`messages-${id}`)
-      .on(
-        "postgres_changes",
-        {
-          event: "INSERT",
-          schema: "public",
-          table: "messages",
-          filter: `project_id=eq.${id}`,
-        },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user, id, loadData, supabase]);
+  }, [user, id, loadData]);
 
   async function sendMessage() {
     if (!newMsg.trim() || !user) return;
@@ -167,6 +146,9 @@ export default function ProjectDetailPage({
       sender_id: user.id,
     });
     setNewMsg("");
+    // Reload messages
+    const { data } = await supabase.from("messages").select("*").eq("project_id", id).order("created_at");
+    setMessages(data || []);
   }
 
   async function uploadFiles(fileList: FileList | File[]) {
