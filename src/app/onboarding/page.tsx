@@ -135,7 +135,7 @@ export default function OnboardingPage() {
       .update({
         full_name: fullName,
         org_name: orgName || (accountType === "freelancer" ? fullName : ""),
-        slug: slug || fullName.toLowerCase().replace(/\s+/g, "-"),
+        org_slug: slug || fullName.toLowerCase().replace(/\s+/g, "-"),
         brand_color: brandColor,
         account_type: accountType,
         role: role,

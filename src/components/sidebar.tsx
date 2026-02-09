@@ -9,13 +9,12 @@ import {
   FileText,
   MessageSquare,
   Settings,
-  Zap,
   LogOut,
+  Zap,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
@@ -24,7 +23,6 @@ const navItems = [
   { href: "/dashboard/clients", label: "Clients", icon: Users },
   { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
   { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
-  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -39,19 +37,20 @@ export function Sidebar() {
     router.refresh();
   }
 
-  const displayName = user?.user_metadata?.full_name || user?.email || "User";
-  const initials = displayName.slice(0, 2).toUpperCase();
+  const displayName = user?.user_metadata?.full_name || user?.email || "U";
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <aside className="hidden lg:flex w-64 flex-col border-r border-border bg-card">
-      <div className="flex items-center gap-2 px-6 py-5 border-b border-border">
-        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
-          <Zap className="h-4 w-4 text-primary-foreground" />
+    <aside className="hidden lg:flex w-[60px] flex-col items-center py-4 bg-white/60 dark:bg-zinc-900/60 backdrop-blur-xl">
+      {/* Logo */}
+      <div className="mb-8">
+        <div className="h-9 w-9 rounded-xl bg-[#37322F] dark:bg-[#E8A040] flex items-center justify-center">
+          <Zap className="h-4 w-4 text-white" />
         </div>
-        <span className="text-lg font-bold tracking-tight">Handoff</span>
       </div>
 
-      <nav className="flex-1 px-3 py-4 space-y-1">
+      {/* Nav icons */}
+      <nav className="flex-1 flex flex-col items-center gap-1">
         {navItems.map((item) => {
           const isActive =
             item.href === "/dashboard"
@@ -61,39 +60,48 @@ export function Sidebar() {
             <Link
               key={item.href}
               href={item.href}
+              title={item.label}
               className={cn(
-                "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                "h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-200",
                 isActive
-                  ? "bg-primary/10 text-primary"
-                  : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                  ? "bg-[#37322F]/10 dark:bg-white/10 text-[#37322F] dark:text-white"
+                  : "text-[rgba(55,50,47,0.35)] dark:text-zinc-600 hover:text-[#37322F] dark:hover:text-white hover:bg-[rgba(55,50,47,0.05)] dark:hover:bg-white/5"
               )}
             >
-              <item.icon className="h-4 w-4" />
-              {item.label}
+              <item.icon className="h-[18px] w-[18px]" strokeWidth={isActive ? 2 : 1.5} />
             </Link>
           );
         })}
       </nav>
 
-      <div className="border-t border-border px-4 py-4">
-        <div className="flex items-center gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarFallback className="bg-gradient-to-br from-indigo-500 to-purple-600 text-white text-xs">
-              {initials}
-            </AvatarFallback>
-          </Avatar>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{displayName}</p>
-            <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
-          </div>
-          <ThemeToggle />
-          <button
-            onClick={handleLogout}
-            className="text-muted-foreground hover:text-foreground transition-colors"
-            title="Sign out"
-          >
-            <LogOut className="h-4 w-4" />
-          </button>
+      {/* Bottom actions */}
+      <div className="flex flex-col items-center gap-1">
+        <Link
+          href="/dashboard/settings"
+          title="Settings"
+          className={cn(
+            "h-10 w-10 rounded-xl flex items-center justify-center transition-all duration-200",
+            pathname.startsWith("/dashboard/settings")
+              ? "bg-[#37322F]/10 dark:bg-white/10 text-[#37322F] dark:text-white"
+              : "text-[rgba(55,50,47,0.35)] dark:text-zinc-600 hover:text-[#37322F] dark:hover:text-white hover:bg-[rgba(55,50,47,0.05)] dark:hover:bg-white/5"
+          )}
+        >
+          <Settings className="h-[18px] w-[18px]" strokeWidth={pathname.startsWith("/dashboard/settings") ? 2 : 1.5} />
+        </Link>
+
+        <ThemeToggle />
+
+        <button
+          onClick={handleLogout}
+          title="Sign out"
+          className="h-10 w-10 rounded-xl flex items-center justify-center text-[rgba(55,50,47,0.35)] dark:text-zinc-600 hover:text-red-500 dark:hover:text-red-400 hover:bg-red-500/5 transition-all duration-200"
+        >
+          <LogOut className="h-[18px] w-[18px]" strokeWidth={1.5} />
+        </button>
+
+        {/* Avatar */}
+        <div className="mt-2 h-8 w-8 rounded-full bg-gradient-to-br from-[#E8A040] to-[#D4922E] flex items-center justify-center text-white text-xs font-semibold">
+          {initial}
         </div>
       </div>
     </aside>
