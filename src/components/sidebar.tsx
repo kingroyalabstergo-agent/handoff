@@ -13,7 +13,7 @@ import {
   LogOut,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { useAuth } from "@/hooks/use-auth";
+import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
@@ -29,7 +29,7 @@ const navItems = [
 export function Sidebar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
 
   async function handleLogout() {
     const supabase = createClient();
@@ -38,7 +38,7 @@ export function Sidebar() {
     router.refresh();
   }
 
-  const displayName = profile?.full_name || user?.email || "User";
+  const displayName = user?.user_metadata?.full_name || user?.email || "User";
   const initials = displayName.slice(0, 2).toUpperCase();
 
   return (
@@ -82,8 +82,8 @@ export function Sidebar() {
             </AvatarFallback>
           </Avatar>
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium truncate">{profile?.org_name || "My Agency"}</p>
-            <p className="text-xs text-muted-foreground truncate capitalize">{profile?.plan || "free"} plan</p>
+            <p className="text-sm font-medium truncate">{displayName}</p>
+            <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
           </div>
           <button
             onClick={handleLogout}

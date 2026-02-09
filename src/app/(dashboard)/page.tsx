@@ -22,7 +22,7 @@ interface RecentProject {
 }
 
 export default function DashboardPage() {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
   const [stats, setStats] = useState({
     projects: 0,
@@ -33,7 +33,8 @@ export default function DashboardPage() {
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
 
   useEffect(() => {
-    if (!user) return;
+    if (authLoading) return;
+    if (!user) { setLoading(false); return; }
     const supabase = createClient();
 
     async function load() {
