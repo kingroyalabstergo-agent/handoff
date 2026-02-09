@@ -1,6 +1,14 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const publicPaths = ["/", "/login", "/signup", "/portal"];
+
+function isPublicPath(pathname: string) {
+  return publicPaths.some(
+    (p) => pathname === p || pathname.startsWith(p + "/")
+  );
+}
+
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -13,7 +21,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           );
           supabaseResponse = NextResponse.next({ request });
@@ -29,19 +37,20 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  const isAuthPage =
-    request.nextUrl.pathname === "/login" ||
-    request.nextUrl.pathname === "/signup";
+  const pathname = request.nextUrl.pathname;
+  const isAuth = pathname === "/login" || pathname === "/signup";
 
-  if (!user && !isAuthPage) {
+  // Authenticated user on auth pages → go to dashboard
+  if (user && isAuth) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
-  if (user && isAuthPage) {
+  // Unauthenticated user on protected pages → go to login
+  if (!user && !isPublicPath(pathname)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/";
+    url.pathname = "/login";
     return NextResponse.redirect(url);
   }
 

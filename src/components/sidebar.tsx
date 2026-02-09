@@ -18,12 +18,12 @@ import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 
 const navItems = [
-  { href: "/", label: "Dashboard", icon: LayoutDashboard },
-  { href: "/projects", label: "Projects", icon: FolderKanban },
-  { href: "/clients", label: "Clients", icon: Users },
-  { href: "/invoices", label: "Invoices", icon: FileText },
-  { href: "/messages", label: "Messages", icon: MessageSquare },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/dashboard/projects", label: "Projects", icon: FolderKanban },
+  { href: "/dashboard/clients", label: "Clients", icon: Users },
+  { href: "/dashboard/invoices", label: "Invoices", icon: FileText },
+  { href: "/dashboard/messages", label: "Messages", icon: MessageSquare },
+  { href: "/dashboard/settings", label: "Settings", icon: Settings },
 ];
 
 export function Sidebar() {
@@ -53,8 +53,8 @@ export function Sidebar() {
       <nav className="flex-1 px-3 py-4 space-y-1">
         {navItems.map((item) => {
           const isActive =
-            item.href === "/"
-              ? pathname === "/"
+            item.href === "/dashboard"
+              ? pathname === "/dashboard"
               : pathname.startsWith(item.href);
           return (
             <Link
