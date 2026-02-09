@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { supabase } from "@/lib/supabase";
+import { useEffect, useState, useCallback } from "react";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -14,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Plus, Mail, Building2 } from "lucide-react";
+import { Plus, Mail, Building2, Loader2 } from "lucide-react";
 
 interface Client {
   id: string;
@@ -24,34 +25,51 @@ interface Client {
 }
 
 export default function ClientsPage() {
+  const { user } = useAuth();
   const [clients, setClients] = useState<Client[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [company, setCompany] = useState("");
 
-  useEffect(() => {
-    loadClients();
-  }, []);
+  const supabase = createClient();
 
-  async function loadClients() {
+  const loadClients = useCallback(async () => {
     const { data } = await supabase
       .from("clients")
       .select("*")
       .order("created_at", { ascending: false });
     setClients(data || []);
-  }
+    setLoading(false);
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!user) return;
+    loadClients();
+  }, [user, loadClients]);
 
   async function handleCreate() {
-    if (!name) return;
-    await supabase
-      .from("clients")
-      .insert({ name, email: email || null, company: company || null });
+    if (!name || !user) return;
+    await supabase.from("clients").insert({
+      name,
+      email: email || null,
+      company: company || null,
+      user_id: user.id,
+    });
     setName("");
     setEmail("");
     setCompany("");
     setOpen(false);
     loadClients();
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -74,17 +92,31 @@ export default function ClientsPage() {
             <div className="space-y-4 pt-2">
               <div>
                 <Label>Name</Label>
-                <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Client name" />
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Client name"
+                />
               </div>
               <div>
                 <Label>Email</Label>
-                <Input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" />
+                <Input
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  placeholder="email@example.com"
+                />
               </div>
               <div>
                 <Label>Company</Label>
-                <Input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company name" />
+                <Input
+                  value={company}
+                  onChange={(e) => setCompany(e.target.value)}
+                  placeholder="Company name"
+                />
               </div>
-              <Button onClick={handleCreate} className="w-full">Add Client</Button>
+              <Button onClick={handleCreate} className="w-full">
+                Add Client
+              </Button>
             </div>
           </DialogContent>
         </Dialog>

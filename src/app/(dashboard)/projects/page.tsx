@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
-import { supabase } from "@/lib/supabase";
+import { createClient } from "@/lib/supabase/client";
+import { useAuth } from "@/lib/auth-context";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -16,7 +17,14 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Plus, Calendar } from "lucide-react";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, Calendar, Loader2 } from "lucide-react";
 
 interface Project {
   id: string;
@@ -24,7 +32,13 @@ interface Project {
   description: string | null;
   status: string;
   due_date: string | null;
+  budget: number | null;
   clients: { name: string } | null;
+}
+
+interface ClientOption {
+  id: string;
+  name: string;
 }
 
 const statusColors: Record<string, string> = {
@@ -35,30 +49,67 @@ const statusColors: Record<string, string> = {
 };
 
 export default function ProjectsPage() {
+  const { user } = useAuth();
   const [projects, setProjects] = useState<Project[]>([]);
+  const [clients, setClients] = useState<ClientOption[]>([]);
+  const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
   const [name, setName] = useState("");
   const [desc, setDesc] = useState("");
+  const [clientId, setClientId] = useState("");
+  const [dueDate, setDueDate] = useState("");
+  const [budget, setBudget] = useState("");
 
-  useEffect(() => {
-    loadProjects();
-  }, []);
+  const supabase = createClient();
 
-  async function loadProjects() {
+  const loadProjects = useCallback(async () => {
     const { data } = await supabase
       .from("projects")
       .select("*, clients(name)")
       .order("created_at", { ascending: false });
     setProjects((data as Project[]) || []);
-  }
+    setLoading(false);
+  }, [supabase]);
+
+  const loadClients = useCallback(async () => {
+    const { data } = await supabase
+      .from("clients")
+      .select("id, name")
+      .order("name");
+    setClients(data || []);
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!user) return;
+    loadProjects();
+    loadClients();
+  }, [user, loadProjects, loadClients]);
 
   async function handleCreate() {
-    if (!name) return;
-    await supabase.from("projects").insert({ name, description: desc || null });
+    if (!name || !user) return;
+    await supabase.from("projects").insert({
+      name,
+      description: desc || null,
+      client_id: clientId || null,
+      due_date: dueDate || null,
+      budget: budget ? parseFloat(budget) : null,
+      user_id: user.id,
+    });
     setName("");
     setDesc("");
+    setClientId("");
+    setDueDate("");
+    setBudget("");
     setOpen(false);
     loadProjects();
+  }
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+      </div>
+    );
   }
 
   return (
@@ -96,6 +147,40 @@ export default function ProjectsPage() {
                   onChange={(e) => setDesc(e.target.value)}
                   placeholder="Brief description"
                 />
+              </div>
+              <div>
+                <Label>Client</Label>
+                <Select value={clientId} onValueChange={setClientId}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select a client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((c) => (
+                      <SelectItem key={c.id} value={c.id}>
+                        {c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <Label>Due Date</Label>
+                  <Input
+                    type="date"
+                    value={dueDate}
+                    onChange={(e) => setDueDate(e.target.value)}
+                  />
+                </div>
+                <div>
+                  <Label>Budget (€)</Label>
+                  <Input
+                    type="number"
+                    value={budget}
+                    onChange={(e) => setBudget(e.target.value)}
+                    placeholder="0.00"
+                  />
+                </div>
               </div>
               <Button onClick={handleCreate} className="w-full">
                 Create Project
@@ -141,6 +226,7 @@ export default function ProjectsPage() {
                         {new Date(project.due_date).toLocaleDateString()}
                       </span>
                     )}
+                    {project.budget && <span>€{project.budget.toLocaleString()}</span>}
                   </div>
                 </CardContent>
               </Card>
