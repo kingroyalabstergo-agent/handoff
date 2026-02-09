@@ -44,6 +44,9 @@ import {
   Plus,
   Loader2,
   ArrowLeft,
+  Share2,
+  Copy,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -54,6 +57,7 @@ interface Project {
   status: string;
   due_date: string | null;
   budget: number | null;
+  client_id: string | null;
   created_at: string;
   clients: { name: string } | null;
 }
@@ -111,6 +115,12 @@ export default function ProjectDetailPage({
   const [loading, setLoading] = useState(true);
   const [newMsg, setNewMsg] = useState("");
   const [uploading, setUploading] = useState(false);
+
+  // Share state
+  const [portalLink, setPortalLink] = useState("");
+  const [copied, setCopied] = useState(false);
+  const [shareOpen, setShareOpen] = useState(false);
+  const [generating, setGenerating] = useState(false);
 
   // Invoice dialog state
   const [invOpen, setInvOpen] = useState(false);
@@ -218,6 +228,40 @@ export default function ProjectDetailPage({
     }
   }
 
+  async function generatePortalLink() {
+    if (!user || !project?.client_id) return;
+    setGenerating(true);
+
+    // Check if a token already exists for this client
+    const { data: existing } = await supabase
+      .from("portal_tokens")
+      .select("token")
+      .eq("client_id", project.client_id)
+      .eq("user_id", user.id)
+      .limit(1)
+      .single();
+
+    if (existing?.token) {
+      setPortalLink(`${window.location.origin}/portal/${existing.token}`);
+    } else {
+      const { data: newToken } = await supabase
+        .from("portal_tokens")
+        .insert({ client_id: project.client_id, user_id: user.id })
+        .select("token")
+        .single();
+      if (newToken?.token) {
+        setPortalLink(`${window.location.origin}/portal/${newToken.token}`);
+      }
+    }
+    setGenerating(false);
+  }
+
+  async function copyLink() {
+    await navigator.clipboard.writeText(portalLink);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
   async function handleCreateInvoice() {
     if (!invAmount || !user) return;
     await supabase.from("invoices").insert({
@@ -286,6 +330,42 @@ export default function ProjectDetailPage({
             <p className="text-muted-foreground mt-1">{project.description}</p>
           )}
         </div>
+        {project.client_id && (
+          <Dialog open={shareOpen} onOpenChange={setShareOpen}>
+            <DialogTrigger asChild>
+              <Button variant="outline" onClick={() => { if (!portalLink) generatePortalLink(); }}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Share with Client
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Client Portal Link</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4 pt-2">
+                <p className="text-sm text-muted-foreground">
+                  Share this link with your client. They can view the project, files, messages, and invoices — no login required.
+                </p>
+                {generating ? (
+                  <div className="flex justify-center py-4"><Loader2 className="h-5 w-5 animate-spin" /></div>
+                ) : portalLink ? (
+                  <div className="flex gap-2">
+                    <input
+                      readOnly
+                      value={portalLink}
+                      className="flex-1 rounded-md border border-border bg-muted px-3 py-2 text-sm"
+                    />
+                    <Button onClick={copyLink} variant="outline" size="icon">
+                      {copied ? <Check className="h-4 w-4 text-emerald-400" /> : <Copy className="h-4 w-4" />}
+                    </Button>
+                  </div>
+                ) : (
+                  <p className="text-sm text-muted-foreground">Generating link...</p>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
+        )}
       </div>
 
       <Tabs defaultValue="overview" className="space-y-4">
