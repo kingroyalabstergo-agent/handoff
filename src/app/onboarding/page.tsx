@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -10,14 +10,14 @@ import {
   Loader2,
   User,
   Building2,
-  Palette,
   ArrowRight,
   ArrowLeft,
   Check,
   Sparkles,
 } from "lucide-react";
+import confetti from "canvas-confetti";
 
-const TOTAL_STEPS = 4;
+const TOTAL_STEPS = 5;
 
 const BRAND_COLORS = [
   "#E8A040",
@@ -59,11 +59,9 @@ export default function OnboardingPage() {
         router.push("/login");
         return;
       }
-      // Pre-fill from auth metadata
       const meta = user.user_metadata;
       if (meta?.full_name) setFullName(meta.full_name);
 
-      // Check if already onboarded
       const { data: profile } = await supabase
         .from("profiles")
         .select("org_name, onboarded")
@@ -80,6 +78,42 @@ export default function OnboardingPage() {
     loadUser();
   }, []);
 
+  const fireConfetti = useCallback(() => {
+    const duration = 3000;
+    const end = Date.now() + duration;
+
+    const frame = () => {
+      confetti({
+        particleCount: 3,
+        angle: 60,
+        spread: 55,
+        origin: { x: 0, y: 0.7 },
+        colors: ["#E8A040", "#F97316", "#FBBF24", "#37322F"],
+      });
+      confetti({
+        particleCount: 3,
+        angle: 120,
+        spread: 55,
+        origin: { x: 1, y: 0.7 },
+        colors: ["#E8A040", "#F97316", "#FBBF24", "#37322F"],
+      });
+
+      if (Date.now() < end) {
+        requestAnimationFrame(frame);
+      }
+    };
+
+    // Big initial burst
+    confetti({
+      particleCount: 100,
+      spread: 70,
+      origin: { y: 0.6 },
+      colors: ["#E8A040", "#F97316", "#FBBF24", "#37322F", "#ffffff"],
+    });
+
+    frame();
+  }, []);
+
   function handleOrgNameChange(value: string) {
     setOrgName(value);
     setSlug(
@@ -91,7 +125,7 @@ export default function OnboardingPage() {
     );
   }
 
-  async function handleFinish() {
+  async function saveAndFinish() {
     setLoading(true);
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
@@ -109,8 +143,16 @@ export default function OnboardingPage() {
       })
       .eq("id", user.id);
 
-    router.push("/dashboard");
+    setLoading(false);
+    setStep(5);
   }
+
+  // Fire confetti when reaching step 5
+  useEffect(() => {
+    if (step === 5) {
+      fireConfetti();
+    }
+  }, [step, fireConfetti]);
 
   const canNext = () => {
     switch (step) {
@@ -122,7 +164,7 @@ export default function OnboardingPage() {
     }
   };
 
-  const progress = (step / TOTAL_STEPS) * 100;
+  const progress = step === 5 ? 100 : ((step - 1) / (TOTAL_STEPS - 1)) * 100;
 
   if (initialLoading) {
     return (
@@ -142,35 +184,37 @@ export default function OnboardingPage() {
         />
       </div>
 
-      {/* Step indicator */}
-      <div className="flex justify-center pt-8 pb-2">
-        <div className="flex items-center gap-2">
-          {Array.from({ length: TOTAL_STEPS }, (_, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <div
-                className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
-                  i + 1 < step
-                    ? "bg-[#E8A040] text-white"
-                    : i + 1 === step
-                    ? "bg-[#E8A040] text-white shadow-lg shadow-[#E8A040]/25"
-                    : "bg-[rgba(55,50,47,0.06)] dark:bg-zinc-800 text-[rgba(55,50,47,0.3)] dark:text-zinc-600"
-                }`}
-              >
-                {i + 1 < step ? <Check className="h-4 w-4" /> : i + 1}
-              </div>
-              {i < TOTAL_STEPS - 1 && (
+      {/* Step indicator — hide on welcome screen */}
+      {step < 5 && (
+        <div className="flex justify-center pt-8 pb-2">
+          <div className="flex items-center gap-2">
+            {Array.from({ length: TOTAL_STEPS - 1 }, (_, i) => (
+              <div key={i} className="flex items-center gap-2">
                 <div
-                  className={`w-8 h-px transition-colors duration-300 ${
+                  className={`h-8 w-8 rounded-full flex items-center justify-center text-sm font-medium transition-all duration-300 ${
                     i + 1 < step
-                      ? "bg-[#E8A040]"
-                      : "bg-[rgba(55,50,47,0.1)] dark:bg-zinc-800"
+                      ? "bg-[#E8A040] text-white"
+                      : i + 1 === step
+                      ? "bg-[#E8A040] text-white shadow-lg shadow-[#E8A040]/25"
+                      : "bg-[rgba(55,50,47,0.06)] dark:bg-zinc-800 text-[rgba(55,50,47,0.3)] dark:text-zinc-600"
                   }`}
-                />
-              )}
-            </div>
-          ))}
+                >
+                  {i + 1 < step ? <Check className="h-4 w-4" /> : i + 1}
+                </div>
+                {i < TOTAL_STEPS - 2 && (
+                  <div
+                    className={`w-8 h-px transition-colors duration-300 ${
+                      i + 1 < step
+                        ? "bg-[#E8A040]"
+                        : "bg-[rgba(55,50,47,0.1)] dark:bg-zinc-800"
+                    }`}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Content */}
       <div className="flex-1 flex items-center justify-center p-6">
@@ -371,7 +415,6 @@ export default function OnboardingPage() {
               </div>
 
               <div className="max-w-sm mx-auto space-y-6">
-                {/* Color grid */}
                 <div className="flex flex-wrap justify-center gap-3">
                   {BRAND_COLORS.map((color) => (
                     <button
@@ -387,7 +430,6 @@ export default function OnboardingPage() {
                   ))}
                 </div>
 
-                {/* Custom color */}
                 <div className="flex items-center gap-3 justify-center">
                   <span className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-600">
                     Or custom:
@@ -405,7 +447,6 @@ export default function OnboardingPage() {
                   </div>
                 </div>
 
-                {/* Preview */}
                 <div className="rounded-2xl border border-[rgba(55,50,47,0.08)] dark:border-zinc-800 bg-white dark:bg-zinc-900 p-6 space-y-3">
                   <div className="text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-600 uppercase tracking-wider">
                     Portal preview
@@ -434,44 +475,82 @@ export default function OnboardingPage() {
             </div>
           )}
 
-          {/* Navigation */}
-          <div className="flex items-center justify-between mt-10 max-w-sm mx-auto">
-            {step > 1 ? (
-              <button
-                onClick={() => setStep(step - 1)}
-                className="flex items-center gap-1.5 text-sm text-[rgba(55,50,47,0.5)] dark:text-zinc-500 hover:text-[#37322F] dark:hover:text-white transition-colors"
-              >
-                <ArrowLeft className="h-4 w-4" />
-                Back
-              </button>
-            ) : (
-              <div />
-            )}
+          {/* Step 5 — Welcome / Confetti */}
+          {step === 5 && (
+            <div className="flex flex-col items-center justify-center text-center space-y-6 animate-in fade-in zoom-in-95 duration-500">
+              {/* Animated checkmark */}
+              <div className="relative">
+                <div className="h-20 w-20 rounded-full bg-[#E8A040]/10 flex items-center justify-center animate-in zoom-in-0 duration-500">
+                  <div className="h-14 w-14 rounded-full bg-[#E8A040] flex items-center justify-center shadow-lg shadow-[#E8A040]/25">
+                    <Check className="h-7 w-7 text-white" strokeWidth={3} />
+                  </div>
+                </div>
+                {/* Pulse ring */}
+                <div className="absolute inset-0 h-20 w-20 rounded-full bg-[#E8A040]/20 animate-ping" style={{ animationDuration: "2s" }} />
+              </div>
 
-            {step < TOTAL_STEPS ? (
+              <div className="space-y-2">
+                <h1
+                  className="text-5xl font-normal text-[#37322F] dark:text-white tracking-tight"
+                  style={{ fontFamily: "var(--font-instrument-serif)" }}
+                >
+                  All set!
+                </h1>
+                <p className="text-[rgba(55,50,47,0.6)] dark:text-zinc-400 text-base max-w-xs mx-auto">
+                  Welcome to Handoff, {fullName.split(" ")[0] || "there"}. Your workspace is ready.
+                </p>
+              </div>
+
               <Button
-                onClick={() => setStep(step + 1)}
-                disabled={!canNext()}
-                className="h-11 px-6 rounded-xl bg-[#37322F] hover:bg-[#4A443F] dark:bg-[#E8A040] dark:hover:bg-[#D4922E] text-white font-medium disabled:opacity-40"
+                onClick={() => router.push("/dashboard")}
+                className="h-12 px-10 rounded-xl bg-[#37322F] hover:bg-[#4A443F] dark:bg-[#E8A040] dark:hover:bg-[#D4922E] text-white font-medium text-base mt-4"
               >
-                Continue
-                <ArrowRight className="ml-2 h-4 w-4" />
+                Go to Dashboard
+                <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
-            ) : (
-              <Button
-                onClick={handleFinish}
-                disabled={loading}
-                className="h-11 px-8 rounded-xl bg-[#E8A040] hover:bg-[#D4922E] text-white font-medium"
-              >
-                {loading ? (
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                ) : (
-                  <Sparkles className="mr-2 h-4 w-4" />
-                )}
-                Launch Handoff
-              </Button>
-            )}
-          </div>
+            </div>
+          )}
+
+          {/* Navigation — hide on welcome screen */}
+          {step < 5 && (
+            <div className="flex items-center justify-between mt-10 max-w-sm mx-auto">
+              {step > 1 ? (
+                <button
+                  onClick={() => setStep(step - 1)}
+                  className="flex items-center gap-1.5 text-sm text-[rgba(55,50,47,0.5)] dark:text-zinc-500 hover:text-[#37322F] dark:hover:text-white transition-colors"
+                >
+                  <ArrowLeft className="h-4 w-4" />
+                  Back
+                </button>
+              ) : (
+                <div />
+              )}
+
+              {step < 4 ? (
+                <Button
+                  onClick={() => setStep(step + 1)}
+                  disabled={!canNext()}
+                  className="h-11 px-6 rounded-xl bg-[#37322F] hover:bg-[#4A443F] dark:bg-[#E8A040] dark:hover:bg-[#D4922E] text-white font-medium disabled:opacity-40"
+                >
+                  Continue
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Button>
+              ) : (
+                <Button
+                  onClick={saveAndFinish}
+                  disabled={loading}
+                  className="h-11 px-8 rounded-xl bg-[#E8A040] hover:bg-[#D4922E] text-white font-medium"
+                >
+                  {loading ? (
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  ) : (
+                    <Sparkles className="mr-2 h-4 w-4" />
+                  )}
+                  Launch Handoff
+                </Button>
+              )}
+            </div>
+          )}
         </div>
       </div>
     </div>
