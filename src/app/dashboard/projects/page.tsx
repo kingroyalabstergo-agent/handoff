@@ -25,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Calendar, Loader2, FolderKanban } from "lucide-react";
+import { Plus, Calendar, Loader2, FolderKanban, Zap, Clock, Archive } from "lucide-react";
 
 interface Project {
   id: string;
@@ -194,46 +194,61 @@ export default function ProjectsPage() {
         </Dialog>
       </div>
 
+      {/* Filter tabs */}
+      <div className="flex items-center gap-2">
+        {[
+          { label: "Active", icon: Zap, filter: "active" },
+          { label: "On Hold", icon: Clock, filter: "on_hold" },
+          { label: "Completed", icon: Archive, filter: "completed" },
+        ].map((tab) => (
+          <button
+            key={tab.filter}
+            className="h-9 px-4 rounded-full flex items-center gap-2 text-sm font-medium border border-[rgba(55,50,47,0.08)] dark:border-white/[0.06] bg-white/60 dark:bg-white/[0.03] text-[rgba(55,50,47,0.5)] dark:text-zinc-500 hover:bg-white dark:hover:bg-white/[0.06] hover:text-[#37322F] dark:hover:text-white transition-all duration-200"
+          >
+            <tab.icon className="h-3.5 w-3.5" strokeWidth={1.5} />
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
       {projects.length === 0 ? (
-        <div className="rounded-3xl bg-[rgba(55,50,47,0.03)] dark:bg-white/[0.02] p-3">
-          <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm p-12 flex flex-col items-center justify-center shadow-sm">
-            <FolderKanban className="h-8 w-8 text-[rgba(55,50,47,0.15)] dark:text-zinc-700 mb-3" strokeWidth={1.5} />
-            <p className="text-[#37322F] dark:text-white font-medium">No projects yet</p>
-            <p className="text-sm text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-1">
-              Create your first project to get started
-            </p>
-          </div>
+        <div className="flex flex-col items-center justify-center py-20">
+          <FolderKanban className="h-10 w-10 text-[rgba(55,50,47,0.1)] dark:text-zinc-800 mb-4" strokeWidth={1.5} />
+          <p className="text-[#37322F] dark:text-white font-medium text-lg">No projects yet</p>
+          <p className="text-sm text-[rgba(55,50,47,0.4)] dark:text-zinc-500 mt-1">
+            Create your first project to get started
+          </p>
         </div>
       ) : (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {projects.map((project) => {
-            const colors = [
-              "from-amber-100 to-orange-50 dark:from-amber-950/30 dark:to-orange-950/20",
-              "from-blue-100 to-indigo-50 dark:from-blue-950/30 dark:to-indigo-950/20",
-              "from-emerald-100 to-green-50 dark:from-emerald-950/30 dark:to-green-950/20",
-              "from-violet-100 to-purple-50 dark:from-violet-950/30 dark:to-purple-950/20",
-              "from-rose-100 to-pink-50 dark:from-rose-950/30 dark:to-pink-950/20",
-              "from-cyan-100 to-teal-50 dark:from-cyan-950/30 dark:to-teal-950/20",
+            const gradients = [
+              "from-amber-100/80 to-orange-50/60 dark:from-amber-900/20 dark:to-orange-900/10",
+              "from-blue-100/80 to-indigo-50/60 dark:from-blue-900/20 dark:to-indigo-900/10",
+              "from-emerald-100/80 to-green-50/60 dark:from-emerald-900/20 dark:to-green-900/10",
+              "from-violet-100/80 to-purple-50/60 dark:from-violet-900/20 dark:to-purple-900/10",
+              "from-rose-100/80 to-pink-50/60 dark:from-rose-900/20 dark:to-pink-900/10",
+              "from-cyan-100/80 to-teal-50/60 dark:from-cyan-900/20 dark:to-teal-900/10",
             ];
-            const colorClass = colors[project.name.length % colors.length];
+            const grad = gradients[project.name.length % gradients.length];
 
             return (
               <Link key={project.id} href={`/dashboard/projects/${project.id}`}>
-                <div className="rounded-2xl bg-white/80 dark:bg-white/[0.04] border border-[rgba(55,50,47,0.06)] dark:border-white/[0.06] backdrop-blur-sm overflow-hidden shadow-sm hover:shadow-md transition-all duration-200 hover:-translate-y-0.5 cursor-pointer">
-                  {/* Header: client + status */}
-                  <div className="flex items-center justify-between px-4 pt-4 pb-3">
-                    <div className="flex items-center gap-2.5">
-                      <div className="h-8 w-8 rounded-full bg-[rgba(55,50,47,0.06)] dark:bg-white/[0.06] flex items-center justify-center text-xs font-semibold text-[#37322F] dark:text-white">
-                        {project.clients?.name?.charAt(0) || project.name.charAt(0)}
+                <div className="rounded-2xl bg-white dark:bg-zinc-900/80 shadow-[0_2px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_2px_12px_rgba(0,0,0,0.3)] overflow-hidden hover:shadow-[0_8px_24px_rgba(0,0,0,0.1)] dark:hover:shadow-[0_8px_24px_rgba(0,0,0,0.4)] transition-all duration-300 hover:-translate-y-1 cursor-pointer">
+                  {/* Header: client avatar + name/date + status */}
+                  <div className="flex items-center justify-between px-5 pt-5 pb-3">
+                    <div className="flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-full bg-[#37322F] dark:bg-zinc-700 flex items-center justify-center text-sm font-semibold text-white">
+                        {project.clients?.name?.charAt(0)?.toUpperCase() || project.name.charAt(0).toUpperCase()}
                       </div>
                       <div>
-                        <p className="text-sm font-medium text-[#37322F] dark:text-white">{project.clients?.name || "No client"}</p>
+                        <p className="text-sm font-semibold text-[#37322F] dark:text-white">{project.clients?.name || "No client"}</p>
                         <p className="text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-500">
                           {new Date(project.created_at).toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" })}
                         </p>
                       </div>
                     </div>
-                    <span className={`inline-flex px-2.5 py-1 rounded-full text-[11px] font-medium ${
+                    <span className={`inline-flex px-3 py-1 rounded-full text-[11px] font-medium ${
                       project.status === "active"
                         ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                         : project.status === "completed"
@@ -246,27 +261,29 @@ export default function ProjectsPage() {
                     </span>
                   </div>
 
-                  {/* Thumbnail / gradient placeholder */}
-                  <div className={`mx-3 h-36 rounded-xl bg-gradient-to-br ${colorClass} flex items-center justify-center`}>
-                    <FolderKanban className="h-8 w-8 text-[rgba(55,50,47,0.1)] dark:text-white/10" strokeWidth={1.5} />
+                  {/* Thumbnail image area */}
+                  <div className={`mx-4 h-40 rounded-xl bg-gradient-to-br ${grad} flex items-center justify-center overflow-hidden`}>
+                    <FolderKanban className="h-10 w-10 text-[rgba(55,50,47,0.08)] dark:text-white/5" strokeWidth={1.5} />
                   </div>
 
                   {/* Project info */}
-                  <div className="px-4 py-3.5">
-                    <h3 className="font-semibold text-[#37322F] dark:text-white text-sm">{project.name}</h3>
+                  <div className="px-5 pt-4 pb-5">
+                    <h3 className="font-semibold text-[#37322F] dark:text-white">{project.name}</h3>
                     {project.description && (
-                      <p className="text-xs text-[rgba(55,50,47,0.5)] dark:text-zinc-500 line-clamp-1 mt-1">
+                      <p className="text-xs text-[rgba(55,50,47,0.5)] dark:text-zinc-500 line-clamp-2 mt-1.5 leading-relaxed">
                         {project.description}
                       </p>
                     )}
-                    <div className="flex items-center gap-3 mt-2.5 text-[11px] text-[rgba(55,50,47,0.4)] dark:text-zinc-500">
+                    <div className="flex items-center gap-4 mt-3 text-xs text-[rgba(55,50,47,0.4)] dark:text-zinc-500">
                       {project.due_date && (
-                        <span className="flex items-center gap-1">
-                          <Calendar className="h-3 w-3" />
+                        <span className="flex items-center gap-1.5">
+                          <Calendar className="h-3.5 w-3.5" strokeWidth={1.5} />
                           {new Date(project.due_date).toLocaleDateString("en-GB", { day: "numeric", month: "short" })}
                         </span>
                       )}
-                      {project.budget && <span>€{project.budget.toLocaleString()}</span>}
+                      {project.budget && (
+                        <span className="font-medium">€{project.budget.toLocaleString()}</span>
+                      )}
                     </div>
                   </div>
                 </div>
