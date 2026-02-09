@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback } from "react";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/hooks/use-realtime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -84,6 +85,8 @@ export default function ProjectsPage() {
     loadProjects();
     loadClients();
   }, [user, loadProjects, loadClients]);
+
+  useRealtime("projects", () => loadProjects(), { enabled: !!user });
 
   async function handleCreate() {
     if (!name || !user) return;

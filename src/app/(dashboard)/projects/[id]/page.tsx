@@ -49,6 +49,7 @@ import {
   Check,
 } from "lucide-react";
 import Link from "next/link";
+import { useRealtime } from "@/hooks/use-realtime";
 
 interface Project {
   id: string;
@@ -146,22 +147,12 @@ export default function ProjectDetailPage({
   useEffect(() => {
     if (!user) return;
     loadData();
+  }, [user, id, loadData]);
 
-    const channel = supabase
-      .channel(`messages-${id}`)
-      .on(
-        "postgres_changes",
-        { event: "INSERT", schema: "public", table: "messages", filter: `project_id=eq.${id}` },
-        (payload) => {
-          setMessages((prev) => [...prev, payload.new as Message]);
-        }
-      )
-      .subscribe();
-
-    return () => {
-      channel.unsubscribe();
-    };
-  }, [user, id, loadData, supabase]);
+  // Real-time updates
+  useRealtime("messages", () => loadData(), { filter: `project_id=eq.${id}`, enabled: !!user });
+  useRealtime("files", () => loadData(), { filter: `project_id=eq.${id}`, enabled: !!user });
+  useRealtime("invoices", () => loadData(), { filter: `project_id=eq.${id}`, enabled: !!user });
 
   async function sendMessage() {
     if (!newMsg.trim() || !user) return;

@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
+import { useRealtime } from "@/hooks/use-realtime";
 import {
   FolderKanban,
   Users,
@@ -32,40 +33,45 @@ export default function DashboardPage() {
   });
   const [recentProjects, setRecentProjects] = useState<RecentProject[]>([]);
 
+  const loadData = useCallback(async () => {
+    const supabase = createClient();
+    const [p, c, inv, recent] = await Promise.all([
+      supabase.from("projects").select("id", { count: "exact", head: true }),
+      supabase.from("clients").select("id", { count: "exact", head: true }),
+      supabase.from("invoices").select("amount, status"),
+      supabase
+        .from("projects")
+        .select("id, name, status, created_at")
+        .order("created_at", { ascending: false })
+        .limit(5),
+    ]);
+    const invoices = inv.data || [];
+    const pending = invoices.filter(
+      (i) => i.status === "sent" || i.status === "overdue"
+    ).length;
+    const revenue = invoices
+      .filter((i) => i.status === "paid")
+      .reduce((sum, i) => sum + Number(i.amount), 0);
+    setStats({
+      projects: p.count || 0,
+      clients: c.count || 0,
+      pendingInvoices: pending,
+      revenue,
+    });
+    setRecentProjects((recent.data as RecentProject[]) || []);
+    setLoading(false);
+  }, []);
+
   useEffect(() => {
     if (authLoading) return;
     if (!user) { setLoading(false); return; }
-    const supabase = createClient();
+    loadData();
+  }, [user, authLoading, loadData]);
 
-    async function load() {
-      const [p, c, inv, recent] = await Promise.all([
-        supabase.from("projects").select("id", { count: "exact", head: true }),
-        supabase.from("clients").select("id", { count: "exact", head: true }),
-        supabase.from("invoices").select("amount, status"),
-        supabase
-          .from("projects")
-          .select("id, name, status, created_at")
-          .order("created_at", { ascending: false })
-          .limit(5),
-      ]);
-      const invoices = inv.data || [];
-      const pending = invoices.filter(
-        (i) => i.status === "sent" || i.status === "overdue"
-      ).length;
-      const revenue = invoices
-        .filter((i) => i.status === "paid")
-        .reduce((sum, i) => sum + Number(i.amount), 0);
-      setStats({
-        projects: p.count || 0,
-        clients: c.count || 0,
-        pendingInvoices: pending,
-        revenue,
-      });
-      setRecentProjects((recent.data as RecentProject[]) || []);
-      setLoading(false);
-    }
-    load();
-  }, [user]);
+  // Real-time: refresh dashboard on any change to these tables
+  useRealtime("projects", () => loadData(), { enabled: !!user });
+  useRealtime("clients", () => loadData(), { enabled: !!user });
+  useRealtime("invoices", () => loadData(), { enabled: !!user });
 
   if (loading) {
     return (
@@ -76,34 +82,13 @@ export default function DashboardPage() {
   }
 
   const cards = [
-    {
-      title: "Total Projects",
-      value: stats.projects,
-      icon: FolderKanban,
-      color: "text-indigo-400",
-    },
-    {
-      title: "Active Clients",
-      value: stats.clients,
-      icon: Users,
-      color: "text-emerald-400",
-    },
-    {
-      title: "Pending Invoices",
-      value: stats.pendingInvoices,
-      icon: FileText,
-      color: "text-amber-400",
-    },
-    {
-      title: "Revenue",
-      value: `€${stats.revenue.toLocaleString()}`,
-      icon: DollarSign,
-      color: "text-green-400",
-    },
+    { title: "Total Projects", value: stats.projects, icon: FolderKanban, color: "text-indigo-400" },
+    { title: "Active Clients", value: stats.clients, icon: Users, color: "text-emerald-400" },
+    { title: "Pending Invoices", value: stats.pendingInvoices, icon: FileText, color: "text-amber-400" },
+    { title: "Revenue", value: `€${stats.revenue.toLocaleString()}`, icon: DollarSign, color: "text-green-400" },
   ];
 
-  const displayName =
-    user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
 
   return (
     <div className="space-y-8">

@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/hooks/use-realtime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { MessageSquare, Loader2 } from "lucide-react";
@@ -20,19 +21,23 @@ export default function MessagesPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    if (!user) return;
+  const loadMessages = useCallback(async () => {
     const supabase = createClient();
-    supabase
+    const { data } = await supabase
       .from("messages")
       .select("*, projects(name)")
       .order("created_at", { ascending: false })
-      .limit(50)
-      .then(({ data }) => {
-        setMessages((data as Message[]) || []);
-        setLoading(false);
-      });
-  }, [user]);
+      .limit(50);
+    setMessages((data as Message[]) || []);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    loadMessages();
+  }, [user, loadMessages]);
+
+  useRealtime("messages", () => loadMessages(), { enabled: !!user });
 
   return (
     <div className="space-y-6">

@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/hooks/use-realtime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
@@ -48,6 +49,8 @@ export default function ClientsPage() {
     if (!user) return;
     loadClients();
   }, [user, loadClients]);
+
+  useRealtime("clients", () => loadClients(), { enabled: !!user });
 
   async function handleCreate() {
     if (!name || !user) return;

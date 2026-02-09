@@ -1,8 +1,9 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { useAuth } from "@/lib/auth-context";
+import { useRealtime } from "@/hooks/use-realtime";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -47,14 +48,16 @@ export default function InvoicesPage() {
   const [dueDate, setDueDate] = useState("");
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => { if (user) { loadInvoices(); loadRefs(); } }, [user]);
-
-  async function loadInvoices() {
+  const loadInvoices = useCallback(async () => {
     const supabase = createClient();
     const { data } = await supabase.from("invoices").select("*, projects(name), clients(name)").order("created_at", { ascending: false });
     setInvoices((data as Invoice[]) || []);
     setLoading(false);
-  }
+  }, []);
+
+  useEffect(() => { if (user) { loadInvoices(); loadRefs(); } }, [user, loadInvoices]);
+
+  useRealtime("invoices", () => loadInvoices(), { enabled: !!user });
 
   async function loadRefs() {
     const supabase = createClient();
