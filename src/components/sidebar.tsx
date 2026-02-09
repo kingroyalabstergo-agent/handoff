@@ -16,6 +16,7 @@ import { cn } from "@/lib/utils";
 import { useAuth } from "@/lib/auth-context";
 import { createClient } from "@/lib/supabase/client";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
+import { ThemeToggle } from "@/components/theme-toggle";
 
 const navItems = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -85,6 +86,7 @@ export function Sidebar() {
             <p className="text-sm font-medium truncate">{displayName}</p>
             <p className="text-xs text-muted-foreground truncate">{user?.email || ""}</p>
           </div>
+          <ThemeToggle />
           <button
             onClick={handleLogout}
             className="text-muted-foreground hover:text-foreground transition-colors"
