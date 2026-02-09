@@ -136,7 +136,22 @@ export default function ProjectDetailPage({
   useEffect(() => {
     if (!user) return;
     loadData();
-  }, [user, id, loadData]);
+
+    const channel = supabase
+      .channel(`messages-${id}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "messages", filter: `project_id=eq.${id}` },
+        (payload) => {
+          setMessages((prev) => [...prev, payload.new as Message]);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      channel.unsubscribe();
+    };
+  }, [user, id, loadData, supabase]);
 
   async function sendMessage() {
     if (!newMsg.trim() || !user) return;
