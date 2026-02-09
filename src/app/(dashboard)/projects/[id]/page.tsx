@@ -169,29 +169,47 @@ export default function ProjectDetailPage({
     setNewMsg("");
   }
 
-  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
-    const file = e.target.files?.[0];
-    if (!file || !user) return;
+  async function uploadFiles(fileList: FileList | File[]) {
+    if (!user) return;
+    const filesToUpload = Array.from(fileList);
+    if (filesToUpload.length === 0) return;
     setUploading(true);
 
-    const filePath = `${user.id}/${id}/${Date.now()}-${file.name}`;
-    const { error: uploadError } = await supabase.storage
-      .from("project-files")
-      .upload(filePath, file);
+    for (const file of filesToUpload) {
+      const filePath = `${user.id}/${id}/${Date.now()}-${file.name}`;
+      const { error: uploadError } = await supabase.storage
+        .from("project-files")
+        .upload(filePath, file);
 
-    if (!uploadError) {
-      await supabase.from("files").insert({
-        project_id: id,
-        uploaded_by: user.id,
-        name: file.name,
-        file_path: filePath,
-        size_bytes: file.size,
-        mime_type: file.type,
-      });
-      loadData();
+      if (!uploadError) {
+        await supabase.from("files").insert({
+          project_id: id,
+          uploaded_by: user.id,
+          name: file.name,
+          file_path: filePath,
+          size_bytes: file.size,
+          mime_type: file.type,
+        });
+      }
     }
+    loadData();
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
+  }
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    if (e.target.files) uploadFiles(e.target.files);
+  }
+
+  function handleDrop(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.dataTransfer.files) uploadFiles(e.dataTransfer.files);
+  }
+
+  function handleDragOver(e: React.DragEvent) {
+    e.preventDefault();
+    e.stopPropagation();
   }
 
   async function handleFileDownload(file: FileRow) {
@@ -369,6 +387,7 @@ export default function ProjectDetailPage({
                 <input
                   ref={fileInputRef}
                   type="file"
+                  multiple
                   className="hidden"
                   onChange={handleFileUpload}
                 />
@@ -388,8 +407,18 @@ export default function ProjectDetailPage({
               </div>
             </CardHeader>
             <CardContent>
+              <div
+                onDrop={handleDrop}
+                onDragOver={handleDragOver}
+                className="border-2 border-dashed border-border/50 rounded-lg p-6 mb-4 text-center hover:border-primary/30 transition-colors"
+              >
+                <Upload className="h-6 w-6 mx-auto text-muted-foreground mb-2" />
+                <p className="text-sm text-muted-foreground">
+                  Drag & drop files here, or click Upload above
+                </p>
+              </div>
               {files.length === 0 ? (
-                <p className="text-sm text-muted-foreground text-center py-8">
+                <p className="text-sm text-muted-foreground text-center py-4">
                   No files uploaded yet
                 </p>
               ) : (
